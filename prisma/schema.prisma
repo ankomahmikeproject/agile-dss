@@ -1,0 +1,51 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Framework Table: Stores the scaling frameworks (SAFe, LeSS, etc.)
+model Framework {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  scores      FrameworkScore[]
+  createdAt   DateTime         @default(now())
+}
+
+// 2. Criteria Table: Stores the factors (Team Size, Technical Complexity, etc.)
+model Criterion {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  scores      FrameworkScore[]
+}
+
+// 3. Junction Table: The mapping of frameworks to criteria scores
+model FrameworkScore {
+  id          String    @id @default(cuid())
+  framework   Framework @relation(fields: [frameworkId], references: [id])
+  frameworkId String
+  criterion   Criterion @relation(fields: [criterionId], references: [id])
+  criterionId String
+  value       Float     // Base score (1-10)
+
+  @@unique([frameworkId, criterionId])
+}
+
+// 4. Saved User Results: Captures the full assessment for history/dashboard
+model UserEvaluation {
+  id             String   @id @default(cuid())
+  userId         String   
+  sector         String   // Industry Context
+  recommendation String   // Winning framework name
+  score          Float    // The top suitability score
+  weights        Json     // All slider values (Importance weights)
+  results        Json     // Full ranked comparison list
+  createdAt      DateTime @default(now())
+}
